@@ -1,18 +1,19 @@
 # ADV_NATIVE_JONY_PREREQS
 
-### Entrypoint
+## Entrypoint
 
-## PaulX- What Lines? 
+### PaulX- What Lines? 
 ```rust
 entrypoint!(process_instruction);
 ```
 
-## Rust Concept? 
+### Rust Concept? 
 
 - Macros, Paulx uses the entrypoint!(process_instruction) macro to register the process_instruction as the program's entry point.
-## Optimization Ideas
 
-## Notes
+### Optimization Ideas
+
+### Notes
 
 The entrypoint.rs should only handle dispatching calls to other processor functions based on the received instruction.
 
@@ -24,9 +25,9 @@ fn process_instruction(
 ) -> ProgramResult
 ```
 
-### IX Discriminator
+## IX Discriminator
 
-## PaulX- What Lines? 
+### PaulX- What Lines? 
 ```rust
 
  pub enum EscrowInstruction {
@@ -43,22 +44,22 @@ let (tag, rest) = input.split_first().ok_or(InvalidInstruction)?;
 
 ```
 
-## Rust Concept? 
+### Rust Concept? 
 
 - Enums, uses an enum to define program's various ix's.
 - Pattern Matching, checks and extracts the first byte to determine which instruction is being executed. It uses pattern matching to map this "discriminator" byte to the correct variant of the EscrowInstruction enum.
 
-## Optimization Ideas
+### Optimization Ideas
 
-## Notes
+### Notes
 
 - this byte essentially serves as an identifier for each instruction,
 
-### IX Serde
+## IX Serde
 
-## PaulX- What Lines? 
+#### PaulX- What Lines? 
+
 ```rust
-
 impl EscrowInstruction {
     /// Unpacks a byte buffer into a [EscrowInstruction](enum.EscrowInstruction.html).
     pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
@@ -84,20 +85,18 @@ impl EscrowInstruction {
 
 ```
 
-## Rust Concept? 
+### Rust Concept? 
 
 - Serde (Serialization/Deserialization): the ix deserialization is implemented manually in the unpack method.
 
-
-## Optimization Ideas
-
-## Notes
+### Notes
 
 - Leverages split_first and try_into for direct and efficient byte manipulation.
 
-### Account Serde
+## Account Serde
 
-## PaulX- What Lines? 
+### PaulX- What Lines? 
+
 ```rust
 impl Pack for Escrow {
     const LEN: usize = 105;
@@ -127,21 +126,18 @@ impl Pack for Escrow {
 }
 ```
 
-## Rust Concept? 
+### Rust Concept? 
 
 - Traits implementations: Pack and Sealed.
 - Bytee Slicing, using the arrayref! and array_mut_ref! macros to access specific sections of the byte array.
 
-
-## Optimization Ideas
-
-## Notes
+### Notes
 
 - The pack trait wich byte slicing is well suited for high-performance nee4ds.
 
+## Account Checks
 
-### Account Checks
-## PaulX- What Lines? 
+### PaulX- What Lines? 
 
 inside process_init_escrow
 
@@ -154,39 +150,38 @@ inside process_init_escrow
 escrow_info.initializer_pubkey != *initializers_main_account.key
 ```
 
-## Rust Concept? 
+### Rust Concept? 
 
 - Dereferencing and Ownership Checks.
 - Public Key Comparisons
-## Optimization Ideas
 
-## Notes
+### Notes
 
 These account checks are essential to ensure integrity within Solana programs.
 
 
-### Balance Checks
+## Balance Checks
 
 Inside the process_exchange 
-## PaulX- What Lines? 
+### PaulX- What Lines? 
+
 ```rust
 if amount_expected_by_taker != pdas_temp_token_account_info.amount {
     return Err(EscrowError::ExpectedAmountMismatch.into());
 }
 ```
-
-## Rust Concept? 
+### Rust Concept? 
 
 - Basic comparison and error handling.
 
-## Notes
+### Notes
 
 - This comparison is crucial to prevent mismatches in the escrow amounts, ensuring the expected value is transferred.
 
+## CPIs
 
-### CPIs
+### PaulX- What Lines? 
 
-## PaulX- What Lines? 
 inside process_init_escrow
 ```rust
 let owner_change_ix = spl_token::instruction::set_authority(
@@ -210,17 +205,15 @@ invoke(
 
 ```
 
-## Rust Concept? 
+### Rust Concept? 
 
 - CPI calls with invoke.
 
+Note : The use of CPIs is critical for interoperability with other Solana programs.
 
-The entrypoint.rs should only handle dispatching calls to other processor functions based on the received instruction.
+## Signer Checks
 
-
-### Signer Checks
-
-## PaulX- What Lines? 
+### PaulX- What Lines? 
 
 In both process_init_escrow and process_exchange, signer checks are done using:
 ```rust
@@ -228,38 +221,37 @@ if !initializer.is_signer { ... }
 if !taker.is_signer { ... }
 ```
 
-## Rust Concept? 
-Signer Verification: Directly using .is_signer to verify that a required account has signed the transaction.
-## Optimization Ideas
+### Rust Concept? 
+- Signer Verification: Directly using .is_signer to verify that a required account has signed the transaction.
+### Optimization Ideas
 
-## Notes
+### Notes
 
-These ensure that actions requiring authorization have the necessary signatures.
+- These ensure that actions requiring authorization have the necessary signatures.
 
 
-### PDAs
-## PaulX- What Lines? 
+##  PDAs
+### PaulX- What Lines? 
 The creation and use of a PDA inside process_exchange
 ```rust
 let (pda, bump_seed) = Pubkey::find_program_address(&[b"escrow"], program_id);
 ```
 
-## Rust Concept? 
+### Rust Concept? 
 
 - Finding PDAs: The use of find_program_address to derive a deterministic, program-specific address using seeds and a bump value.
-## Optimization Ideas
+### Optimization Ideas
 
 - Reuse the saved bump.
 
-## Notes
+### Notes
 
 When PDAs are involved in signing, we use invoke_signed with the derived address and seeds.
 
 
+## Error Handling 
 
-### Error Handling & Testing
-
-## PaulX- What Lines? 
+### PaulX- What Lines? 
 ```rust
 #[derive(Error, Debug, Copy, Clone)]
 pub enum EscrowError {
@@ -282,11 +274,10 @@ Throughout the code we handle the errors:
 ```rust
 .ok_or(EscrowError::AmountOverflow)?
 ```
-## Rust Concept? 
+### Rust Concept? 
 
 - Custom Errors: the use of a custom error enum EscrowError
-## Optimization Ideas
 
-## Notes
+### Notes
 
 The use of custom error enums with clear messages helps in debugging and testing. 
