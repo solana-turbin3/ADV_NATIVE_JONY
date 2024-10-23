@@ -133,7 +133,7 @@ impl Pack for Escrow {
 
 ### Notes
 
-- The pack trait wich byte slicing is well suited for high-performance nee4ds.
+- The pack trait wich byte slicing is well suited for high-performance needs.
 
 ## Account Checks
 
